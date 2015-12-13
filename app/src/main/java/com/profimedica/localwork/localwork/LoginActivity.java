@@ -18,6 +18,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
@@ -106,16 +107,9 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-
-
         FacebookSdk.sdkInitialize(getApplicationContext());
 
         setContentView(R.layout.activity_login);
-
-
-
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
         mContentView = findViewById(R.id.fullscreen_content);
@@ -136,30 +130,30 @@ public class LoginActivity extends AppCompatActivity {
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
 
         LoginButton loginButton = (LoginButton)findViewById(R.id.login_button);
-        loginButton.setReadPermissions("user_friends");
         // If using in a fragment
         //loginButton.setFragment(this);
         // Other app specific specialization
 
         callbackManager = CallbackManager.Factory.create();
-        // Callback registration
-        loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
-            @Override
-            public void onSuccess(LoginResult loginResult) {
-                Intent intent = new Intent(LoginActivity.this, DomainSelectorActivity.class);
-                startActivity(intent);
-            }
 
-            @Override
-            public void onCancel() {
-                infoTextView.setText("Canceled by user");
-            }
+        LoginManager.getInstance().registerCallback(callbackManager,
+                new FacebookCallback<LoginResult>() {
+                    @Override
+                    public void onSuccess(LoginResult loginResult) {
+                        Intent intent = new Intent(LoginActivity.this, DomainSelectorActivity.class);
+                        startActivity(intent);
+                    }
 
-            @Override
-            public void onError(FacebookException exception) {
-                infoTextView.setText("ERROR: " + exception.getMessage());
-            }
-        });
+                    @Override
+                    public void onCancel() {
+                        // App code
+                    }
+
+                    @Override
+                    public void onError(FacebookException exception) {
+                        infoTextView.setText("ERROR: " + exception.getMessage());
+                    }
+                });
     }
 
     public void skipClicked(View view) {

@@ -1,12 +1,23 @@
 package com.profimedica.localwork.localwork;
 
 import android.annotation.SuppressLint;
+import android.os.AsyncTask;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -31,7 +42,7 @@ public class DomainSelectorActivity extends AppCompatActivity {
      */
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
-    private View mContentView;
+    private TextView mContentView;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -91,7 +102,7 @@ public class DomainSelectorActivity extends AppCompatActivity {
 
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
-        mContentView = findViewById(R.id.fullscreen_content);
+        mContentView = (TextView)findViewById(R.id.fullscreen_content);
 
 
         // Set up the user interaction to manually show or hide the system UI.
@@ -106,6 +117,13 @@ public class DomainSelectorActivity extends AppCompatActivity {
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        new readURL().execute("http://www.profimedica.ro/");
+
+    }
+
+
+    private int countWordFrequency(){
+        return -1;
     }
 
     @Override
@@ -160,4 +178,89 @@ public class DomainSelectorActivity extends AppCompatActivity {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
+
+
+    private class readURL extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+                String content = new String();
+                try {
+                    URL yahoo = new URL("http://www.realitatea.net/");
+                    BufferedReader in = new BufferedReader(
+                            new InputStreamReader(
+                                    yahoo.openStream()));
+
+                    String inputLine;
+
+
+                    while ((inputLine = in.readLine()) != null)
+                        content += " " + inputLine;
+
+                    in.close();
+
+
+                } catch (Exception e) {
+                    String error = e.getMessage();
+                    return error;
+                }
+                return content;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            mContentView = (TextView)findViewById(R.id.fullscreen_content);
+            // Split by space
+            String[] words = result.split("\\s+");
+            // Create unprocessed list of all words
+            List<String> unprocessedList = Arrays.asList(words);
+            // Create processed list of unique words
+            List<Item> resultList = new ArrayList<>();
+            for(Iterator<String> i = unprocessedList.iterator(); i.hasNext(); ) {
+                String currentItem  = i.next();
+                if (currentItem.length()<4) continue;
+                Item itemFound = null;
+                for (Iterator<Item> k = resultList.iterator(); k.hasNext(); ) {
+                    Item item = k.next();
+                    if (item.Word.equals(currentItem)) {
+                        itemFound = item;
+                        break;
+                    }
+                }
+                if (itemFound == null) {
+                    resultList.add(new Item(currentItem));
+                } else {
+                    itemFound.Occurences++;
+                }
+
+
+
+
+            }
+
+            Collections.sort(resultList);
+            Collections.reverse(resultList);
+
+            // Make list of words
+
+            String listOfWords = new String();
+            for(Iterator<Item> i = resultList.iterator(); i.hasNext(); ) {
+                Item item = i.next();
+                listOfWords += "\n" + item.Word + " (" + item.Occurences + ")";
+            }
+
+
+
+            mContentView.setText(listOfWords);
+            // might want to change "executed" for the returned string passed
+            // into onPostExecute() but that is upto you
+        }
+
+        @Override
+        protected void onPreExecute() {}
+
+        @Override
+        protected void onProgressUpdate(Void... values) {}
+    }
 }
+
